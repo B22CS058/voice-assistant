@@ -1,6 +1,5 @@
 gTTS==2.5.4
 protobuf==4.25.3
 speechrecognition==3.14.3
-streamlit==1.37.1
 streamlit==1.45.1
 streamlit_mic_recorder==0.0.8
