@@ -138,15 +138,49 @@ def transcribe_audio(audio_data, sample_rate=16000, sample_width=2):
     except Exception as e:
         return f"Error transcribing audio: {e}"
 
+SYSTEM_PROMPT = {
+    "role": "user",
+    "parts": [
+        "You are a friendly and cheerful chatbot created as a special birthday gift for Deep Shikha. " +
+        "Your purpose is to make her feel celebrated, happy, and cared for. Always respond in a " +
+        "warm, supportive, and enthusiastic tone. Use emojis, birthday-themed language, and " +
+        "personal touches. Offer compliments, birthday wishes, and suggestions for fun activities. " +
+        "If she asks for advice or ideas, be thoughtful and creative. Never use negative or " +
+        "insensitive language. Always focus on making her day extra special!"
+    ]
+}
+
+# def generate_response(chat_history):
+#     """Generate a response using Gemini with chat history"""
+#     history = []
+#     for msg in chat_history[:-1]:
+#         role = "user" if msg['role'] == 'user' else "model"  # Map 'assistant' to 'model'
+#         history.append({"role": role, "parts": [msg['content']]})
+#     model = genai.GenerativeModel('gemini-2.0-flash-thinking-exp')  # Replace with the correct model name if needed
+#     chat = model.start_chat(history=history)
+#     response = chat.send_message(chat_history[-1]['content'])
+#     return response.text
+
 def generate_response(chat_history):
-    """Generate a response using Gemini with chat history"""
-    history = []
-    for msg in chat_history[:-1]:
-        role = "user" if msg['role'] == 'user' else "model"  # Map 'assistant' to 'model'
-        history.append({"role": role, "parts": [msg['content']]})
-    model = genai.GenerativeModel('gemini-2.0-flash-thinking-exp')  # Replace with the correct model name if needed
+    """Generate a response using Gemini with chat history, prepending the system prompt only once."""
+    # Only prepend system prompt if this is the first user message (after welcome)
+    if len(chat_history) == 2 and chat_history[0]['role'] == 'assistant' and chat_history[1]['role'] == 'user':
+        history = [SYSTEM_PROMPT]
+        # Add the user message
+        history.append({"role": "user", "parts": [chat_history[1]['content']]})
+    else:
+        # For subsequent messages, just convert the chat history
+        history = []
+        for msg in chat_history[:-1]:
+            role = "user" if msg['role'] == 'user' else "model"
+            history.append({"role": role, "parts": [msg['content']]})
+    # Always add the latest user message (if not already included)
+    if len(chat_history) > 0 and chat_history[-1]['role'] == 'user' and (len(history) == 0 or history[-1]['role'] != "user"):
+        history.append({"role": "user", "parts": [chat_history[-1]['content']]})
+    # Start chat with Gemini
+    model = genai.GenerativeModel('gemini-2.0-flash-thinking-exp')  # Use your model name
     chat = model.start_chat(history=history)
-    response = chat.send_message(chat_history[-1]['content'])
+    response = chat.send_message(chat_history[-1]['content'])  # Send latest user message
     return response.text
 
 def text_to_speech(text, output_file="response.mp3"):
@@ -186,6 +220,13 @@ if os.path.exists("happy_birthday.mp3"):
 # Initialize chat history in session state
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+    # Add welcome message for display
+    st.session_state.chat_history.append({
+        'role': 'assistant',
+        'content': "🎉 Happy Birthday, Deep Shikha! I’m your personal chatbot, here to celebrate with you! 🎂🎈"
+    })
+    # Mark that the system prompt has been added (optional, for Gemini)
+    st.session_state.system_prompt_added = True
 
 # Streamlit app layout
 st.title("Your personal chatbot")
