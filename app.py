@@ -188,7 +188,7 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 # Streamlit app layout
-st.title("Chat with Microphone Support")
+st.title("Your personal chatbot")
 
 # Radio button to select input method
 input_method = st.radio("Select input method:", ["Type a message", "Upload audio file", "Record audio"])
@@ -211,7 +211,7 @@ elif input_method == "Record audio":
         input_for_response = transcribe_audio(recorded_audio['bytes'])
 
 # Handle Response Generation
-if st.button("Get Response"):
+if st.button("Chat"):
     if input_method == "Type a message" and user_input:
         input_for_response = user_input
     if input_for_response:
@@ -229,9 +229,9 @@ if st.button("Get Response"):
         st.warning("Please type a message, upload an audio file, or record audio.")
 
 # Display Chat History
-st.markdown("## Chat History")
+st.markdown("## Our conversations")
 for chat in st.session_state.chat_history:
     if chat['role'] == 'user':
         st.markdown(f"**You:** {chat['content']}")
     else:
-        st.markdown(f"**Assistant:** {chat['content']}")
+        st.markdown(f"**Me:** {chat['content']}")
